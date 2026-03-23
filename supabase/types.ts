@@ -15,33 +15,36 @@ export interface Database {
           user_id: string
           created_at: string | null
           skin_type: string | null
-          score: number | null
           ai_observation: string | null
           goal_conflict: string | null
+          concerns: Json | null
+          routine: Json | null
+          ingredients: Json | null
           questionnaire: Json | null
-          image_url: string | null
         }
         Insert: {
           id?: string
           user_id: string
           created_at?: string | null
           skin_type?: string | null
-          score?: number | null
           ai_observation?: string | null
           goal_conflict?: string | null
+          concerns?: Json | null
+          routine?: Json | null
+          ingredients?: Json | null
           questionnaire?: Json | null
-          image_url?: string | null
         }
         Update: {
           id?: string
           user_id?: string
           created_at?: string | null
           skin_type?: string | null
-          score?: number | null
           ai_observation?: string | null
           goal_conflict?: string | null
+          concerns?: Json | null
+          routine?: Json | null
+          ingredients?: Json | null
           questionnaire?: Json | null
-          image_url?: string | null
         }
       }
     }

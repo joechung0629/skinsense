@@ -135,9 +135,11 @@ export default function AnalyzeForm() {
             await supabase.from("analysis_history").insert({
               user_id: user.id,
               skin_type: data.skinType,
-              score: data.score,
               ai_observation: data.aiObservation || null,
               goal_conflict: data.goalConflict || null,
+              concerns: data.concerns || [],
+              routine: data.routine || { morning: [], evening: [] },
+              ingredients: data.ingredients || [],
               questionnaire: {
                 skinTypeSelf,
                 tZoneOiliness,
