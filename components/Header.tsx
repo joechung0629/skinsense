@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import LoginButton from "./LoginButton";
 
 export default function Header() {
   return (
@@ -39,12 +40,7 @@ export default function Header() {
         </ul>
 
         <div className="flex gap-3">
-          <Link
-            href="/login"
-            className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100"
-          >
-            登入
-          </Link>
+          <LoginButton />
           <Link
             href="/analyzer"
             className="rounded-lg bg-skin-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-skin-700"

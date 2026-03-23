@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import AnalyzeForm from "@/components/AnalyzeForm";
+import LoginGate from "@/components/LoginGate";
 
 export const metadata: Metadata = {
   title: "皮膚分析",
@@ -18,7 +19,9 @@ export default function AnalyzerPage() {
       </header>
 
       <div className="mx-auto max-w-4xl">
-        <AnalyzeForm />
+        <LoginGate>
+          <AnalyzeForm />
+        </LoginGate>
       </div>
     </div>
   );
