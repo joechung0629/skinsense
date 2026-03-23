@@ -38,6 +38,47 @@ export default function AnalyzeForm() {
     });
   };
 
+  // Compress image if too large (max 1MB base64 = ~750KB image)
+  const compressImage = async (file: File, maxSizeMB = 0.5): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          // Scale down if too large
+          const maxDim = 800;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = (height / width) * maxDim;
+              width = maxDim;
+            } else {
+              width = (width / height) * maxDim;
+              height = maxDim;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d')!;
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Convert to base64 (lower quality for smaller size)
+          const compressed = canvas.toDataURL('image/jpeg', 0.7);
+          const base64 = compressed.includes(",") ? compressed.split(",")[1] : compressed;
+          resolve(base64);
+        };
+        img.onerror = reject;
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -50,7 +91,8 @@ export default function AnalyzeForm() {
     setError(null);
     
     try {
-      const base64 = await fileToBase64(image);
+      // Use compressed image to avoid base64 size limits
+      const base64 = await compressImage(image);
       
       const response = await fetch(EDGE_FUNCTION_URL, {
         method: "POST",
