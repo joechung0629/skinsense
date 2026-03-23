@@ -31,6 +31,14 @@ export default function Header() {
           </li>
           <li>
             <Link
+              href="/history"
+              className="text-gray-600 transition-colors hover:text-skin-600"
+            >
+              歷史記錄
+            </Link>
+          </li>
+          <li>
+            <Link
               href="/blog"
               className="text-gray-600 transition-colors hover:text-skin-600"
             >

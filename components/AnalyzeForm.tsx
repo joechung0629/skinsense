@@ -2,10 +2,14 @@
 
 import { useState } from "react";
 import clsx from "clsx";
+import { createClient } from "@/lib/supabase";
+import { useAuth } from "@/app/providers/AuthProvider";
 
 const EDGE_FUNCTION_URL = "https://gsvkuzusfnieblzcsvcs.supabase.co/functions/v1/analyze-skin";
 
 export default function AnalyzeForm() {
+  const { user } = useAuth();
+  const supabase = createClient();
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -124,6 +128,42 @@ export default function AnalyzeForm() {
         setError(data.error);
       } else {
         setResult(data);
+
+        // Save to history if user is logged in
+        if (user) {
+          try {
+            await supabase.from("analysis_history").insert({
+              user_id: user.id,
+              skin_type: data.skinType,
+              score: data.score,
+              ai_observation: data.aiObservation || null,
+              goal_conflict: data.goalConflict || null,
+              questionnaire: {
+                skinTypeSelf,
+                tZoneOiliness,
+                poreSize,
+                acneLevel,
+                sensitivity,
+                hydration,
+                gender,
+                age,
+                climate,
+                isTraveling,
+                travelClimate,
+                goal,
+                skinHistory,
+              },
+              analysis_data: {
+                concerns: data.concerns,
+                routine: data.routine,
+                ingredients: data.ingredients,
+              },
+            });
+          } catch (saveErr) {
+            // Silent fail - don't interrupt user experience
+            console.error("Failed to save history:", saveErr);
+          }
+        }
       }
     } catch (err: any) {
       setError(err.message || "網絡錯誤，請稍後再試");
