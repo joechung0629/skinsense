@@ -154,7 +154,6 @@ export default function AnalyzeForm() {
                 skinHistory,
               },
             } as any);
-            });
           } catch (saveErr) {
             // Silent fail - don't interrupt user experience
             console.error("Failed to save history:", saveErr);
