@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import clsx from "clsx";
-import { createClient } from "@/lib/supabase";
+
+const EDGE_FUNCTION_URL = "https://gsvkuzusfnieblzcsvcs.supabase.co/functions/v1/analyze-skin";
 
 export default function AnalyzeForm() {
   const [image, setImage] = useState<File | null>(null);
@@ -23,6 +24,15 @@ export default function AnalyzeForm() {
     }
   };
 
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -35,23 +45,25 @@ export default function AnalyzeForm() {
     setError(null);
     
     try {
-      // Convert image to base64
       const base64 = await fileToBase64(image);
       
-      // Call Supabase Edge Function
-      const supabase = createClient()
-      const { data, error: funcError } = await supabase.functions.invoke('analyze-skin', {
-        body: { imageBase64: base64, skinHistory }
-      })
+      const response = await fetch(EDGE_FUNCTION_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          imageBase64: base64,
+          skinHistory: skinHistory || undefined
+        }),
+      });
 
-      if (funcError) {
-        throw new Error(funcError.message)
-      }
-
-      if (data?.error) {
-        setError(data.error)
+      const data = await response.json();
+      
+      if (data.error) {
+        setError(data.error);
       } else {
-        setResult(data)
+        setResult(data);
       }
     } catch (err: any) {
       setError(err.message || "網絡錯誤，請稍後再試");
@@ -59,15 +71,6 @@ export default function AnalyzeForm() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
   };
 
   return (
