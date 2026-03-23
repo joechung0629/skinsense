@@ -153,11 +153,6 @@ export default function AnalyzeForm() {
                 goal,
                 skinHistory,
               },
-              analysis_data: {
-                concerns: data.concerns,
-                routine: data.routine,
-                ingredients: data.ingredients,
-              },
             });
           } catch (saveErr) {
             // Silent fail - don't interrupt user experience
