@@ -427,6 +427,14 @@ export default function AnalyzeForm() {
             )}
           </div>
 
+          {/* Goal Conflict Warning */}
+          {result.goalConflict && (
+            <div className="rounded-xl bg-amber-50 border border-amber-200 p-6">
+              <h3 className="text-lg font-bold mb-2 text-amber-700">⚠️ 目標提醒</h3>
+              <p className="text-amber-800">{result.goalConflict}</p>
+            </div>
+          )}
+
           {/* Concerns */}
           {result.concerns && result.concerns.length > 0 && (
             <div className="rounded-xl bg-skin-50 p-6">
