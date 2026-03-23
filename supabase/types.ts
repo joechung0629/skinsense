@@ -13,7 +13,7 @@ export interface Database {
         Row: {
           id: string
           user_id: string
-          created_at: string
+          created_at: string | null
           skin_type: string | null
           score: number | null
           ai_observation: string | null
@@ -24,7 +24,7 @@ export interface Database {
         Insert: {
           id?: string
           user_id: string
-          created_at?: string
+          created_at?: string | null
           skin_type?: string | null
           score?: number | null
           ai_observation?: string | null
@@ -35,7 +35,7 @@ export interface Database {
         Update: {
           id?: string
           user_id?: string
-          created_at?: string
+          created_at?: string | null
           skin_type?: string | null
           score?: number | null
           ai_observation?: string | null
@@ -45,5 +45,8 @@ export interface Database {
         }
       }
     }
+    Views: {}
+    Functions: {}
+    Enums: {}
   }
 }
