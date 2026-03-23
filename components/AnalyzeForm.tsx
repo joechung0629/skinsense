@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import clsx from "clsx";
+import { createClient } from "@/lib/supabase";
 
 export default function AnalyzeForm() {
   const [image, setImage] = useState<File | null>(null);
@@ -34,28 +35,39 @@ export default function AnalyzeForm() {
     setError(null);
     
     try {
-      const formData = new FormData();
-      formData.append("image", image);
-      if (skinHistory) formData.append("skinHistory", skinHistory);
-
-      const res = await fetch("/api/analyze", {
-        method: "POST",
-        body: formData,
-      });
-
-      const json = await res.json();
+      // Convert image to base64
+      const base64 = await fileToBase64(image);
       
-      if (json.success) {
-        setResult(json.data);
-      } else {
-        setError(json.error || "分析失敗");
+      // Call Supabase Edge Function
+      const supabase = createClient()
+      const { data, error: funcError } = await supabase.functions.invoke('analyze-skin', {
+        body: { imageBase64: base64, skinHistory }
+      })
+
+      if (funcError) {
+        throw new Error(funcError.message)
       }
-    } catch (err) {
-      setError("網絡錯誤，請稍後再試");
+
+      if (data?.error) {
+        setError(data.error)
+      } else {
+        setResult(data)
+      }
+    } catch (err: any) {
+      setError(err.message || "網絡錯誤，請稍後再試");
       console.error(err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   };
 
   return (
