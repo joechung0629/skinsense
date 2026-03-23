@@ -8,10 +8,18 @@ const EDGE_FUNCTION_URL = "https://gsvkuzusfnieblzcsvcs.supabase.co/functions/v1
 export default function AnalyzeForm() {
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const [skinHistory, setSkinHistory] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  
+  // User profile
+  const [gender, setGender] = useState<"male" | "female" | "">("");
+  const [age, setAge] = useState<"18-25" | "26-35" | "36-45" | "45+" | "">("");
+  const [climate, setClimate] = useState<"tropical" | "dry" | "moderate" | "cold" | "">("");
+  const [isTraveling, setIsTraveling] = useState(false);
+  const [travelClimate, setTravelClimate] = useState<"tropical" | "dry" | "cold" | "island" | "">("");
+  const [goal, setGoal] = useState<"oil_control" | "whitening" | "anti_aging" | "acne" | "moisturizing" | "">("");
+  const [skinHistory, setSkinHistory] = useState("");
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -24,21 +32,6 @@ export default function AnalyzeForm() {
     }
   };
 
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        // Remove the data URI prefix (e.g., "data:image/jpeg;base64,")
-        const base64 = result.includes(",") ? result.split(",")[1] : result;
-        resolve(base64);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  };
-
-  // Compress image if too large (max 1MB base64 = ~750KB image)
   const compressImage = async (file: File, maxSizeMB = 0.5): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -49,7 +42,6 @@ export default function AnalyzeForm() {
           let width = img.width;
           let height = img.height;
           
-          // Scale down if too large
           const maxDim = 800;
           if (width > maxDim || height > maxDim) {
             if (width > height) {
@@ -66,7 +58,6 @@ export default function AnalyzeForm() {
           const ctx = canvas.getContext('2d')!;
           ctx.drawImage(img, 0, 0, width, height);
           
-          // Convert to base64 (lower quality for smaller size)
           const compressed = canvas.toDataURL('image/jpeg', 0.7);
           const base64 = compressed.includes(",") ? compressed.split(",")[1] : compressed;
           resolve(base64);
@@ -91,7 +82,6 @@ export default function AnalyzeForm() {
     setError(null);
     
     try {
-      // Use compressed image to avoid base64 size limits
       const base64 = await compressImage(image);
       
       const response = await fetch(EDGE_FUNCTION_URL, {
@@ -102,6 +92,12 @@ export default function AnalyzeForm() {
         },
         body: JSON.stringify({
           imageBase64: base64,
+          gender,
+          age,
+          climate,
+          isTraveling,
+          travelClimate,
+          goal,
           skinHistory: skinHistory || undefined
         }),
       });
@@ -122,7 +118,7 @@ export default function AnalyzeForm() {
   };
 
   return (
-    <div className="grid gap-8 lg:grid-cols-2">
+    <div className="space-y-8">
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Image Upload */}
         <div className="rounded-xl border-2 border-dashed border-gray-200 p-8 text-center">
@@ -162,6 +158,107 @@ export default function AnalyzeForm() {
           )}
         </div>
 
+        {/* User Profile Section */}
+        <div className="rounded-xl bg-skin-50 p-6 space-y-4">
+          <h3 className="text-lg font-bold">👤 基本資料</h3>
+          
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Gender */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">性別</label>
+              <select
+                value={gender}
+                onChange={(e) => setGender(e.target.value as any)}
+                className="w-full rounded-lg border border-gray-200 p-2 focus:border-skin-500 focus:outline-none"
+              >
+                <option value="">請選擇</option>
+                <option value="male">男</option>
+                <option value="female">女</option>
+              </select>
+            </div>
+
+            {/* Age */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">年齡</label>
+              <select
+                value={age}
+                onChange={(e) => setAge(e.target.value as any)}
+                className="w-full rounded-lg border border-gray-200 p-2 focus:border-skin-500 focus:outline-none"
+              >
+                <option value="">請選擇</option>
+                <option value="18-25">18-25 歲</option>
+                <option value="26-35">26-35 歲</option>
+                <option value="36-45">36-45 歲</option>
+                <option value="45+">45 歲以上</option>
+              </select>
+            </div>
+
+            {/* Climate */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">居住氣候</label>
+              <select
+                value={climate}
+                onChange={(e) => setClimate(e.target.value as any)}
+                className="w-full rounded-lg border border-gray-200 p-2 focus:border-skin-500 focus:outline-none"
+              >
+                <option value="">請選擇</option>
+                <option value="tropical">熱帶/亞熱帶（香港、新加坡）</option>
+                <option value="dry">乾燥（北京、沙漠）</option>
+                <option value="moderate">溫和（台灣、日本）</option>
+                <option value="cold">寒冷（韓國、北方）</option>
+              </select>
+            </div>
+
+            {/* Goal */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">主要目標</label>
+              <select
+                value={goal}
+                onChange={(e) => setGoal(e.target.value as any)}
+                className="w-full rounded-lg border border-gray-200 p-2 focus:border-skin-500 focus:outline-none"
+              >
+                <option value="">請選擇</option>
+                <option value="oil_control">控油</option>
+                <option value="whitening">美白</option>
+                <option value="anti_aging">抗老</option>
+                <option value="acne">祛痘</option>
+                <option value="moisturizing">保濕</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Traveling */}
+          <div>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isTraveling}
+                onChange={(e) => setIsTraveling(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-skin-500 focus:ring-skin-500"
+              />
+              <span className="text-sm font-medium text-gray-700">我正在旅行</span>
+            </label>
+          </div>
+
+          {/* Travel Climate */}
+          {isTraveling && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">旅行目的地氣候</label>
+              <select
+                value={travelClimate}
+                onChange={(e) => setTravelClimate(e.target.value as any)}
+                className="w-full rounded-lg border border-gray-200 p-2 focus:border-skin-500 focus:outline-none"
+              >
+                <option value="">請選擇</option>
+                <option value="tropical">熱帶雨林</option>
+                <option value="dry">乾燥地區</option>
+                <option value="cold">寒冷地區</option>
+                <option value="island">海島度假</option>
+              </select>
+            </div>
+          )}
+        </div>
+
         {/* Skin History */}
         <div>
           <label className="mb-2 block text-sm font-medium text-gray-700">
@@ -170,7 +267,7 @@ export default function AnalyzeForm() {
           <textarea
             value={skinHistory}
             onChange={(e) => setSkinHistory(e.target.value)}
-            rows={3}
+            rows={2}
             placeholder="例如：我是乾性皮膚，對酒精過敏..."
             className="w-full rounded-lg border border-gray-200 p-3 focus:border-skin-500 focus:outline-none focus:ring-2 focus:ring-skin-100"
           />
@@ -186,10 +283,10 @@ export default function AnalyzeForm() {
         {/* Submit */}
         <button
           type="submit"
-          disabled={loading || !image}
+          disabled={loading || !image || !gender || !age || !climate || !goal}
           className={clsx(
             "w-full rounded-lg py-3 font-medium text-white transition-colors",
-            loading || !image
+            loading || !image || !gender || !age || !climate || !goal
               ? "bg-gray-400 cursor-not-allowed"
               : "bg-skin-600 hover:bg-skin-700"
           )}
