@@ -200,34 +200,99 @@ export default function AnalyzeForm() {
 
       {/* Result */}
       {result && (
-        <div className="rounded-xl bg-skin-50 p-6">
-          <h3 className="mb-4 text-lg font-bold">分析結果</h3>
-          <div className="space-y-4">
-            <div>
-              <span className="font-medium">皮膚類型：</span>
-              <span className="capitalize">{result.skinType}</span>
-            </div>
-            <div>
-              <span className="font-medium">評分：</span>
-              <span>{result.score}/100</span>
-            </div>
-            {result.concerns && (
-              <div>
-                <span className="font-medium">問題：</span>
-                <ul className="list-disc list-inside">
-                  {result.concerns.map((c: string, i: number) => (
-                    <li key={i}>{c}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            <div>
-              <span className="font-medium">護理建議：</span>
-              <pre className="mt-2 overflow-auto text-sm whitespace-pre-wrap">
-                {JSON.stringify(result, null, 2)}
-              </pre>
+        <div className="space-y-6">
+          {/* Score Card */}
+          <div className="rounded-xl bg-gradient-to-br from-skin-500 to-skin-600 p-6 text-white">
+            <div className="text-center">
+              <div className="text-5xl font-bold mb-2">{result.score}</div>
+              <div className="text-sm opacity-80">總評分</div>
             </div>
           </div>
+
+          {/* Skin Type */}
+          <div className="rounded-xl bg-skin-50 p-6">
+            <h3 className="text-lg font-bold mb-2">🔍 皮膚類型</h3>
+            <p className="text-2xl font-semibold text-skin-600">
+              {result.skinType === 'oily' && '油性肌膚'}
+              {result.skinType === 'dry' && '乾性肌膚'}
+              {result.skinType === 'combination' && '混合肌膚'}
+              {result.skinType === 'normal' && '正常肌膚'}
+              {result.skinType === 'sensitive' && '敏感肌膚'}
+            </p>
+          </div>
+
+          {/* Concerns */}
+          {result.concerns && result.concerns.length > 0 && (
+            <div className="rounded-xl bg-skin-50 p-6">
+              <h3 className="text-lg font-bold mb-3">⚠️ 肌膚問題</h3>
+              <ul className="space-y-2">
+                {result.concerns.map((c: string, i: number) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-skin-400"></span>
+                    {c}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Routine - Morning */}
+          {result.routine?.morning && (
+            <div className="rounded-xl bg-skin-50 p-6">
+              <h3 className="text-lg font-bold mb-3">☀️ 早間護理</h3>
+              <ol className="space-y-3">
+                {result.routine.morning.map((item: any, i: number) => (
+                  <li key={i} className="flex gap-3">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-skin-200 text-skin-700 text-sm font-bold flex items-center justify-center">
+                      {i + 1}
+                    </span>
+                    <div>
+                      <p className="font-medium text-skin-800">{item.product}</p>
+                      <p className="text-sm text-gray-600">{item.purpose}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+
+          {/* Routine - Evening */}
+          {result.routine?.evening && (
+            <div className="rounded-xl bg-skin-50 p-6">
+              <h3 className="text-lg font-bold mb-3">🌙 晚間護理</h3>
+              <ol className="space-y-3">
+                {result.routine.evening.map((item: any, i: number) => (
+                  <li key={i} className="flex gap-3">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-skin-200 text-skin-700 text-sm font-bold flex items-center justify-center">
+                      {i + 1}
+                    </span>
+                    <div>
+                      <p className="font-medium text-skin-800">{item.product}</p>
+                      <p className="text-sm text-gray-600">{item.purpose}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+
+          {/* Ingredients */}
+          {result.ingredients && result.ingredients.length > 0 && (
+            <div className="rounded-xl bg-skin-50 p-6">
+              <h3 className="text-lg font-bold mb-3">✨ 推薦成分</h3>
+              <div className="space-y-3">
+                {result.ingredients.map((item: any, i: number) => (
+                  <div key={i} className="border-l-4 border-skin-400 pl-4">
+                    <p className="font-medium text-skin-700">{item.ingredient}</p>
+                    <p className="text-sm text-gray-600">{item.benefit}</p>
+                    {item.concentration && (
+                      <p className="text-xs text-skin-500 mt-1">建議濃度：{item.concentration}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
