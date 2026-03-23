@@ -27,7 +27,12 @@ export default function AnalyzeForm() {
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
+      reader.onload = () => {
+        const result = reader.result as string;
+        // Remove the data URI prefix (e.g., "data:image/jpeg;base64,")
+        const base64 = result.includes(",") ? result.split(",")[1] : result;
+        resolve(base64);
+      };
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
