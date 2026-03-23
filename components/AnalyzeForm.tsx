@@ -153,6 +153,7 @@ export default function AnalyzeForm() {
                 goal,
                 skinHistory,
               },
+            } as any);
             });
           } catch (saveErr) {
             // Silent fail - don't interrupt user experience
