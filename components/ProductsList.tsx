@@ -104,7 +104,6 @@ export default function ProductsList() {
     setAnalysisResults((prev) => ({ ...prev, [product.id]: null }));
 
     try {
-      // Get the session
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
 
@@ -163,7 +162,6 @@ export default function ProductsList() {
     if (!user) return;
 
     try {
-      // Get all analyses for this user
       const { data: analyses } = await (supabase as any)
         .from("analysis_history")
         .select("id, created_at, concerns, skin_type")
@@ -172,7 +170,6 @@ export default function ProductsList() {
 
       if (!analyses || analyses.length === 0) return;
 
-      // Get product links
       const analysisIds = analyses.map((a: AnalysisRecord) => a.id);
       const { data: links } = await (supabase as any)
         .from("analysis_product_links")
@@ -181,7 +178,6 @@ export default function ProductsList() {
 
       if (!links) return;
 
-      // Calculate effectiveness for each product
       const effects: Record<string, ProductEffectiveness> = {};
       
       for (const product of products) {
@@ -202,14 +198,12 @@ export default function ProductsList() {
           continue;
         }
 
-        // Calculate usage days
         const firstAnalysis = linkedAnalyses[0];
         const lastAnalysis = linkedAnalyses[linkedAnalyses.length - 1];
         const firstDate = new Date(firstAnalysis.created_at);
         const lastDate = new Date(lastAnalysis.created_at);
         const usageDays = Math.ceil((lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24));
 
-        // Compare concerns to determine effectiveness
         const firstConcerns = firstAnalysis.concerns || [];
         const lastConcerns = lastAnalysis.concerns || [];
         
@@ -222,10 +216,10 @@ export default function ProductsList() {
           
           if (improvedCount > newConcerns && improvedCount > 0) {
             status = "improving";
-            statusText = `✅ ${improvedCount} 個問題改善了`;
+            statusText = `✅ ${improvedCount} 個問題改善`;
           } else if (newConcerns > improvedCount) {
             status = "needs_attention";
-            statusText = `⚠️ ${newConcerns} 個新問題出現`;
+            statusText = `⚠️ ${newConcerns} 個新問題`;
           } else {
             status = "stable";
             statusText = "皮膚狀況穩定";
@@ -353,90 +347,24 @@ export default function ProductsList() {
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
             {typeProducts.map((product) => {
               const effect = productEffects[product.id];
+              const hasAnalysis = !!analysisResults[product.id];
               
               return (
                 <div
                   key={product.id}
                   className="rounded-xl border border-gray-200 bg-white p-4 hover:border-skin-300 hover:shadow-sm transition-all"
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <h4 className="font-medium text-gray-900 truncate">{product.name}</h4>
                       {product.brand && (
-                        <p className="text-sm text-gray-500 truncate">{product.brand}</p>
+                        <p className="text-xs text-gray-500 truncate">{product.brand}</p>
                       )}
-                      {product.notes && (
-                        <p className="text-sm text-gray-400 mt-2 line-clamp-2">{product.notes}</p>
-                      )}
-                      
-                      {/* Effectiveness Status */}
-                      {effect && effect.status !== "unknown" && (
-                        <div className="mt-3 pt-3 border-t border-gray-100">
-                          <div className={clsx(
-                            "text-sm",
-                            effect.status === "improving" && "text-green-600",
-                            effect.status === "stable" && "text-gray-600",
-                            effect.status === "needs_attention" && "text-amber-600"
-                          )}>
-                            <span>{effect.statusText}</span>
-                          </div>
-                          {effect.usageDays > 0 && (
-                            <span className="text-xs text-gray-400 mt-1 block">
-                              使用 {effect.usageDays} 天
-                            </span>
-                          )}
-                        </div>
-                      )}
-                      
-                      {/* Usage Duration */}
-                      {effect && effect.usageDays > 0 && (
-                        <div className="mt-2 text-xs text-gray-400">
-                          已關聯 {effect.linkedAnalyses} 次分析
-                        </div>
-                      )}
-
-                      {/* Ingredient Analysis Result */}
-                      {analysisResults[product.id] && (
-                        <div className={clsx(
-                          "mt-3 p-3 rounded-lg text-sm",
-                          analysisResults[product.id]!.status === "good" && "bg-green-50 text-green-700",
-                          analysisResults[product.id]!.status === "warning" && "bg-amber-50 text-amber-700",
-                          analysisResults[product.id]!.status === "bad" && "bg-red-50 text-red-700"
-                        )}>
-                          <div className="font-medium mb-1">{analysisResults[product.id]!.analysis_result || 
-                            (analysisResults[product.id]!.status === "good" ? "✅ 適合" :
-                             analysisResults[product.id]!.status === "warning" ? "⚠️ 注意" : "❌ 不適合")}</div>
-                          <div className="text-xs opacity-80">{analysisResults[product.id]!.recommendation}</div>
-                        </div>
-                      )}
-
-                      {/* Analyze Button */}
-                      <button
-                        onClick={() => analyzeProduct(product)}
-                        disabled={analyzingProduct === product.id}
-                        className={clsx(
-                          "mt-3 w-full rounded-lg py-2 text-sm font-medium transition-colors flex items-center justify-center gap-2",
-                          analyzingProduct === product.id
-                            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                            : "bg-skin-100 text-skin-700 hover:bg-skin-200"
-                        )}
-                      >
-                        {analyzingProduct === product.id ? (
-                          <>
-                            <span className="animate-spin">⏳</span>
-                            分析中...
-                          </>
-                        ) : (
-                          <>
-                            🔍 檢查成分
-                          </>
-                        )}
-                      </button>
                     </div>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 flex-shrink-0">
                       <button
                         onClick={() => setEditingProduct(product)}
-                        className="p-2 text-gray-400 hover:text-skin-600 rounded-lg hover:bg-skin-50 transition-colors"
+                        className="p-1.5 text-gray-400 hover:text-skin-600 rounded hover:bg-skin-50 transition-colors"
                         title="編輯"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -445,7 +373,7 @@ export default function ProductsList() {
                       </button>
                       <button
                         onClick={() => setDeleteConfirm(product.id)}
-                        className="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                        className="p-1.5 text-gray-400 hover:text-red-600 rounded hover:bg-red-50 transition-colors"
                         title="刪除"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -455,20 +383,76 @@ export default function ProductsList() {
                     </div>
                   </div>
 
+                  {/* Effectiveness & Analysis Row */}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {/* Product Effectiveness */}
+                    {effect && effect.status !== "unknown" && (
+                      <span className={clsx(
+                        "inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs",
+                        effect.status === "improving" && "bg-green-50 text-green-600",
+                        effect.status === "stable" && "bg-gray-50 text-gray-600",
+                        effect.status === "needs_attention" && "bg-amber-50 text-amber-600"
+                      )}>
+                        {effect.statusText}
+                      </span>
+                    )}
+
+                    {/* Ingredient Analysis Result - Compact */}
+                    {hasAnalysis && (
+                      <span className={clsx(
+                        "inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs",
+                        analysisResults[product.id]!.status === "good" && "bg-green-50 text-green-600",
+                        analysisResults[product.id]!.status === "warning" && "bg-amber-50 text-amber-600",
+                        analysisResults[product.id]!.status === "bad" && "bg-red-50 text-red-600"
+                      )}>
+                        <span>{analysisResults[product.id]!.status === "good" ? "✅" : analysisResults[product.id]!.status === "warning" ? "⚠️" : "❌"}</span>
+                        <span className="truncate max-w-[120px]">
+                          {analysisResults[product.id]!.analysis_result || analysisResults[product.id]!.recommendation}
+                        </span>
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="mt-3 flex gap-2">
+                    {!hasAnalysis ? (
+                      <button
+                        onClick={() => analyzeProduct(product)}
+                        disabled={analyzingProduct === product.id}
+                        className={clsx(
+                          "flex-1 rounded-lg py-2 text-sm font-medium transition-colors flex items-center justify-center gap-2",
+                          analyzingProduct === product.id
+                            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                            : "bg-skin-100 text-skin-700 hover:bg-skin-200"
+                        )}
+                      >
+                        {analyzingProduct === product.id ? "⏳ 分析中..." : "🔍 檢查成分"}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => analyzeProduct(product)}
+                        disabled={analyzingProduct === product.id}
+                        className="flex-1 rounded-lg py-1.5 text-xs text-gray-500 hover:text-skin-600 transition-colors border border-gray-200 hover:border-skin-300"
+                      >
+                        {analyzingProduct === product.id ? "⏳ 更新中..." : "🔄 重新分析"}
+                      </button>
+                    )}
+                  </div>
+
                   {/* Delete Confirmation */}
                   {deleteConfirm === product.id && (
                     <div className="mt-3 pt-3 border-t border-gray-100">
-                      <p className="text-sm text-gray-600 mb-2">確定要刪除嗎？</p>
+                      <p className="text-xs text-gray-600 mb-2">確定要刪除嗎？</p>
                       <div className="flex gap-2">
                         <button
                           onClick={() => setDeleteConfirm(null)}
-                          className="flex-1 rounded-lg border border-gray-200 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                          className="flex-1 rounded-lg border border-gray-200 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50"
                         >
                           取消
                         </button>
                         <button
                           onClick={() => handleDelete(product.id)}
-                          className="flex-1 rounded-lg bg-red-600 py-1.5 text-sm font-medium text-white hover:bg-red-700"
+                          className="flex-1 rounded-lg bg-red-600 py-1.5 text-xs font-medium text-white hover:bg-red-700"
                         >
                           刪除
                         </button>
