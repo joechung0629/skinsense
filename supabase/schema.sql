@@ -58,3 +58,26 @@ ALTER TABLE product_usage_logs ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users own their logs" ON product_usage_logs
   FOR ALL USING (user_id = auth.uid()::TEXT);
+
+-- =====================================================
+-- Analysis-Product Links Table
+-- =====================================================
+-- Tracks which products the user was using when they did an analysis
+CREATE TABLE IF NOT EXISTS analysis_product_links (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  analysis_id UUID REFERENCES analysis_history(id) ON DELETE CASCADE,
+  product_id UUID REFERENCES skincare_products(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(analysis_id, product_id)
+);
+
+ALTER TABLE analysis_product_links ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users own their links" ON analysis_product_links
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM analysis_history
+      WHERE analysis_history.id = analysis_product_links.analysis_id
+      AND analysis_history.user_id = auth.uid()::TEXT
+    )
+  );

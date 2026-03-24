@@ -1,11 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import clsx from "clsx";
 import { createClient } from "@/lib/supabase";
 import { useAuth } from "@/app/providers/AuthProvider";
+import Link from "next/link";
 
 const EDGE_FUNCTION_URL = "https://gsvkuzusfnieblzcsvcs.supabase.co/functions/v1/analyze-skin";
+
+interface SkincareProduct {
+  id: string;
+  name: string;
+  type: string;
+  brand: string | null;
+}
 
 export default function AnalyzeForm() {
   const { user } = useAuth();
@@ -15,6 +23,7 @@ export default function AnalyzeForm() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [analysisId, setAnalysisId] = useState<string | null>(null);
   
   // User profile - Skin status questionnaire
   const [skinTypeSelf, setSkinTypeSelf] = useState<"oily" | "dry" | "combination" | "normal" | "sensitive" | "unsure" | "">("");
@@ -32,6 +41,33 @@ export default function AnalyzeForm() {
   const [travelClimate, setTravelClimate] = useState<"tropical" | "dry" | "cold" | "island" | "">("");
   const [goal, setGoal] = useState<"oil_control" | "whitening" | "anti_aging" | "acne" | "moisturizing" | "">("");
   const [skinHistory, setSkinHistory] = useState("");
+
+  // Product selection after analysis
+  const [userProducts, setUserProducts] = useState<SkincareProduct[]>([]);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [showProductSelector, setShowProductSelector] = useState(false);
+  const [savingProducts, setSavingProducts] = useState(false);
+  const [productsSaved, setProductsSaved] = useState(false);
+
+  // Fetch user's products for selection
+  useEffect(() => {
+    if (user && showProductSelector && userProducts.length === 0) {
+      fetchUserProducts();
+    }
+  }, [user, showProductSelector]);
+
+  const fetchUserProducts = async () => {
+    if (!user) return;
+    try {
+      const { data } = await (supabase as any)
+        .from("skincare_products")
+        .select("id, name, type, brand")
+        .eq("user_id", user.id);
+      setUserProducts(data || []);
+    } catch (err) {
+      console.error("Failed to fetch products:", err);
+    }
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -128,34 +164,47 @@ export default function AnalyzeForm() {
         setError(data.error);
       } else {
         setResult(data);
+        setShowProductSelector(false);
+        setProductsSaved(false);
+        setSelectedProductIds([]);
 
         // Save to history if user is logged in
         if (user) {
           try {
-            await supabase.from("analysis_history").insert({
-              user_id: user.id,
-              skin_type: data.skinType,
-              ai_observation: data.aiObservation || null,
-              goal_conflict: data.goalConflict || null,
-              concerns: data.concerns || [],
-              routine: data.routine || { morning: [], evening: [] },
-              ingredients: data.ingredients || [],
-              questionnaire: {
-                skinTypeSelf,
-                tZoneOiliness,
-                poreSize,
-                acneLevel,
-                sensitivity,
-                hydration,
-                gender,
-                age,
-                climate,
-                isTraveling,
-                travelClimate,
-                goal,
-                skinHistory,
-              },
-            } as any);
+            const { data: insertData, error: insertErr } = await supabase
+              .from("analysis_history")
+              .insert({
+                user_id: user.id,
+                skin_type: data.skinType,
+                ai_observation: data.aiObservation || null,
+                goal_conflict: data.goalConflict || null,
+                concerns: data.concerns || [],
+                routine: data.routine || { morning: [], evening: [] },
+                ingredients: data.ingredients || [],
+                questionnaire: {
+                  skinTypeSelf,
+                  tZoneOiliness,
+                  poreSize,
+                  acneLevel,
+                  sensitivity,
+                  hydration,
+                  gender,
+                  age,
+                  climate,
+                  isTraveling,
+                  travelClimate,
+                  goal,
+                  skinHistory,
+                },
+              } as any)
+              .select("id")
+              .single();
+
+            if (!insertErr && insertData) {
+              setAnalysisId((insertData as any).id);
+              // Show product selector after analysis
+              setShowProductSelector(true);
+            }
           } catch (saveErr) {
             // Silent fail - don't interrupt user experience
             console.error("Failed to save history:", saveErr);
@@ -167,6 +216,37 @@ export default function AnalyzeForm() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleProductToggle = (productId: string) => {
+    setSelectedProductIds(prev =>
+      prev.includes(productId)
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
+
+  const saveProductLinks = async () => {
+    if (!analysisId || selectedProductIds.length === 0) return;
+    
+    setSavingProducts(true);
+    try {
+      const links = selectedProductIds.map(productId => ({
+        analysis_id: analysisId,
+        product_id: productId,
+      }));
+      
+      await (supabase as any)
+        .from("analysis_product_links")
+        .insert(links);
+      
+      setProductsSaved(true);
+      setShowProductSelector(false);
+    } catch (err) {
+      console.error("Failed to save product links:", err);
+    } finally {
+      setSavingProducts(false);
     }
   };
 
@@ -439,6 +519,35 @@ export default function AnalyzeForm() {
       {/* Result */}
       {result && (
         <div className="space-y-6">
+          {/* Enhanced Goal Conflict Warning - TOP PRIORITY */}
+          {result.goalConflict && (
+            <div className="rounded-xl border-2 border-amber-400 bg-amber-50 p-6">
+              <h3 className="text-lg font-bold text-amber-800 mb-2">
+                ⚠️ 護膚目標與皮膚狀況衝突
+              </h3>
+              <p className="text-amber-700 mb-4">
+                {result.goalConflict}
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href="/analyzer"
+                  className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600 transition-colors"
+                >
+                  調整目標
+                </Link>
+                <button
+                  onClick={() => {
+                    const warning = document.getElementById('goal-conflict-dismiss');
+                    if (warning) warning.remove();
+                  }}
+                  className="text-amber-600 underline text-sm hover:text-amber-700"
+                >
+                  我知道了，繼續
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Score Card */}
           <div className="rounded-xl bg-gradient-to-br from-skin-500 to-skin-600 p-6 text-white">
             <div className="text-center">
@@ -464,11 +573,81 @@ export default function AnalyzeForm() {
             )}
           </div>
 
-          {/* Goal Conflict Warning */}
-          {result.goalConflict && (
-            <div className="rounded-xl bg-amber-50 border border-amber-200 p-6">
-              <h3 className="text-lg font-bold mb-2 text-amber-700">⚠️ 目標提醒</h3>
-              <p className="text-amber-800">{result.goalConflict}</p>
+          {/* Product Selection After Analysis */}
+          {user && showProductSelector && (
+            <div className="rounded-xl bg-white border border-skin-200 p-6">
+              <h3 className="text-lg font-bold mb-2">🧴 我正在使用這些產品</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                選擇你目前在用的產品，我們可以幫你追蹤效果
+              </p>
+              
+              {userProducts.length > 0 ? (
+                <>
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {userProducts.map(product => (
+                      <label
+                        key={product.id}
+                        className={clsx(
+                          "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
+                          selectedProductIds.includes(product.id)
+                            ? "border-skin-500 bg-skin-50"
+                            : "border-gray-200 hover:border-skin-300"
+                        )}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedProductIds.includes(product.id)}
+                          onChange={() => handleProductToggle(product.id)}
+                          className="w-4 h-4 rounded border-gray-300 text-skin-500 focus:ring-skin-500"
+                        />
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900">{product.name}</p>
+                          {product.brand && (
+                            <p className="text-xs text-gray-500">{product.brand}</p>
+                          )}
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                  
+                  {productsSaved ? (
+                    <div className="mt-4 p-3 bg-green-50 text-green-700 rounded-lg text-sm">
+                      ✓ 已儲存產品關聯
+                    </div>
+                  ) : (
+                    <div className="mt-4 flex gap-3">
+                      <button
+                        onClick={saveProductLinks}
+                        disabled={savingProducts || selectedProductIds.length === 0}
+                        className={clsx(
+                          "flex-1 rounded-lg py-2 text-sm font-medium transition-colors",
+                          savingProducts || selectedProductIds.length === 0
+                            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                            : "bg-skin-600 text-white hover:bg-skin-700"
+                        )}
+                      >
+                        {savingProducts ? "儲存中..." : "儲存並繼續"}
+                      </button>
+                      <button
+                        onClick={() => setShowProductSelector(false)}
+                        className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800"
+                      >
+                        略過
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-gray-500 text-sm mb-3">還沒有添加任何產品</p>
+                  <Link
+                    href="/products"
+                    className="text-skin-600 hover:text-skin-700 text-sm font-medium"
+                  >
+                    + 添加護膚品
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 

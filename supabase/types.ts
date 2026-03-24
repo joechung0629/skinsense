@@ -99,6 +99,26 @@ export interface Database {
           routine_time?: string | null
         }
       }
+      analysis_product_links: {
+        Row: {
+          id: string
+          analysis_id: string
+          product_id: string
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          analysis_id: string
+          product_id: string
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          analysis_id?: string
+          product_id?: string
+          created_at?: string | null
+        }
+      }
     }
     Views: {}
     Functions: {}

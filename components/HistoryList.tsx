@@ -153,11 +153,22 @@ export default function HistoryList() {
           {/* Expanded Details */}
           {expandedId === item.id && (
             <div className="border-t border-gray-200 p-4 space-y-4">
-              {/* Goal Conflict Warning */}
+              {/* Enhanced Goal Conflict Warning */}
               {item.goal_conflict && (
-                <div className="rounded-lg bg-amber-50 border border-amber-200 p-3">
-                  <h4 className="text-sm font-bold text-amber-700 mb-1">⚠️ 目標提醒</h4>
-                  <p className="text-sm text-amber-800">{item.goal_conflict}</p>
+                <div className="rounded-xl border-2 border-amber-400 bg-amber-50 p-4">
+                  <h4 className="text-base font-bold text-amber-800 mb-2">⚠️ 護膚目標與皮膚狀況衝突</h4>
+                  <p className="text-amber-700 mb-3">{item.goal_conflict}</p>
+                  <div className="flex gap-3">
+                    <a
+                      href="/analyzer"
+                      className="rounded-lg bg-amber-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-600 transition-colors"
+                    >
+                      調整目標
+                    </a>
+                    <span className="text-amber-600 text-sm underline cursor-pointer">
+                      我知道了
+                    </span>
+                  </div>
                 </div>
               )}
 
