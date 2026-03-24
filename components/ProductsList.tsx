@@ -104,11 +104,18 @@ export default function ProductsList() {
     setAnalysisResults((prev) => ({ ...prev, [product.id]: null }));
 
     try {
+      // Get the session
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/analyze-ingredient`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
           body: JSON.stringify({
             productId: product.id,
             productName: product.name,
