@@ -29,6 +29,7 @@
 - AI 分析並生成個人化護膚建議
 - 人類皮膚驗證（防止上傳無關圖片）
 - **目標衝突警告（加強版）**：更大的警告框，包含「調整目標」和「我知道了」按鈕
+- **問卷自動帶入**：已登入用戶下次訪問時，問卷答案自動填入（可修改）
 
 #### 用戶系統
 - Google OAuth 登入
@@ -143,6 +144,27 @@ AI 分析 → 獲得護膚建議
 | analysis_id | UUID | 分析記錄 ID |
 | product_id | UUID | 護膚品 ID |
 | created_at | TIMESTAMPTZ | 創建時間 |
+
+### user_profiles
+| 欄位 | 類型 | 說明 |
+|------|------|------|
+| id | UUID | 主鍵 |
+| user_id | TEXT | 用戶 ID（唯一） |
+| created_at | TIMESTAMPTZ | 創建時間 |
+| updated_at | TIMESTAMPTZ | 更新時間 |
+| skin_type_self | TEXT | 自我皮膚類型 |
+| t_zone_oiliness | TEXT | T區油脂情況 |
+| pore_size | TEXT | 毛孔大小 |
+| acne_level | TEXT | 痘痘程度 |
+| sensitivity | TEXT | 敏感程度 |
+| hydration | TEXT | 缺水情況 |
+| gender | TEXT | 性別 |
+| age | TEXT | 年齡 |
+| climate | TEXT | 居住氣候 |
+| is_traveling | BOOLEAN | 是否旅行中 |
+| travel_climate | TEXT | 旅行目的地氣候 |
+| goal | TEXT | 主要目標 |
+| skin_history | TEXT | 皮膚/過敏史 |
 
 ---
 

@@ -119,6 +119,65 @@ export interface Database {
           created_at?: string | null
         }
       }
+      user_profiles: {
+        Row: {
+          id: string
+          user_id: string
+          created_at: string | null
+          updated_at: string | null
+          skin_type_self: string | null
+          t_zone_oiliness: string | null
+          pore_size: string | null
+          acne_level: string | null
+          sensitivity: string | null
+          hydration: string | null
+          gender: string | null
+          age: string | null
+          climate: string | null
+          is_traveling: boolean | null
+          travel_climate: string | null
+          goal: string | null
+          skin_history: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          created_at?: string | null
+          updated_at?: string | null
+          skin_type_self?: string | null
+          t_zone_oiliness?: string | null
+          pore_size?: string | null
+          acne_level?: string | null
+          sensitivity?: string | null
+          hydration?: string | null
+          gender?: string | null
+          age?: string | null
+          climate?: string | null
+          is_traveling?: boolean | null
+          travel_climate?: string | null
+          goal?: string | null
+          skin_history?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          created_at?: string | null
+          updated_at?: string | null
+          skin_type_self?: string | null
+          t_zone_oiliness?: string | null
+          pore_size?: string | null
+          acne_level?: string | null
+          sensitivity?: string | null
+          hydration?: string | null
+          gender?: string | null
+          age?: string | null
+          climate?: string | null
+          is_traveling?: boolean | null
+          travel_climate?: string | null
+          goal?: string | null
+          skin_history?: string | null
+        }
+      }
     }
     Views: {}
     Functions: {}

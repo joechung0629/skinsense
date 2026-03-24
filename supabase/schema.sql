@@ -81,3 +81,50 @@ CREATE POLICY "Users own their links" ON analysis_product_links
       AND analysis_history.user_id = auth.uid()::TEXT
     )
   );
+
+-- =====================================================
+-- User Profiles Table
+-- =====================================================
+-- Stores user's questionnaire answers and basic profile for auto-fill
+CREATE TABLE IF NOT EXISTS user_profiles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  
+  -- Questionnaire answers
+  skin_type_self TEXT,
+  t_zone_oiliness TEXT,
+  pore_size TEXT,
+  acne_level TEXT,
+  sensitivity TEXT,
+  hydration TEXT,
+  
+  -- Basic info
+  gender TEXT,
+  age TEXT,
+  climate TEXT,
+  is_traveling BOOLEAN DEFAULT false,
+  travel_climate TEXT,
+  goal TEXT,
+  skin_history TEXT
+);
+
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users own their profile" ON user_profiles
+  FOR ALL USING (user_id = auth.uid()::TEXT);
+
+-- Auto-update updated_at
+CREATE OR REPLACE FUNCTION update_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER user_profiles_updated_at
+  BEFORE UPDATE ON user_profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at();

@@ -16,7 +16,7 @@ interface SkincareProduct {
 }
 
 export default function AnalyzeForm() {
-  const { user } = useAuth();
+  const { user, userProfile, refreshProfile } = useAuth();
   const supabase = createClient();
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -41,6 +41,53 @@ export default function AnalyzeForm() {
   const [travelClimate, setTravelClimate] = useState<"tropical" | "dry" | "cold" | "island" | "">("");
   const [goal, setGoal] = useState<"oil_control" | "whitening" | "anti_aging" | "acne" | "moisturizing" | "">("");
   const [skinHistory, setSkinHistory] = useState("");
+
+  // Auto-fill from saved profile when user logs in or profile loads
+  useEffect(() => {
+    if (user && userProfile) {
+      // Only auto-fill if user hasn't modified the form yet
+      // (i.e., all fields are still empty from initial state)
+      if (!skinTypeSelf && userProfile.skin_type_self) {
+        setSkinTypeSelf(userProfile.skin_type_self as any);
+      }
+      if (!tZoneOiliness && userProfile.t_zone_oiliness) {
+        setTZoneOiliness(userProfile.t_zone_oiliness as any);
+      }
+      if (!poreSize && userProfile.pore_size) {
+        setPoreSize(userProfile.pore_size as any);
+      }
+      if (!acneLevel && userProfile.acne_level) {
+        setAcneLevel(userProfile.acne_level as any);
+      }
+      if (!sensitivity && userProfile.sensitivity) {
+        setSensitivity(userProfile.sensitivity as any);
+      }
+      if (!hydration && userProfile.hydration) {
+        setHydration(userProfile.hydration as any);
+      }
+      if (!gender && userProfile.gender) {
+        setGender(userProfile.gender as any);
+      }
+      if (!age && userProfile.age) {
+        setAge(userProfile.age as any);
+      }
+      if (!climate && userProfile.climate) {
+        setClimate(userProfile.climate as any);
+      }
+      if (!isTraveling && userProfile.is_traveling !== undefined) {
+        setIsTraveling(userProfile.is_traveling);
+      }
+      if (!travelClimate && userProfile.travel_climate) {
+        setTravelClimate(userProfile.travel_climate as any);
+      }
+      if (!goal && userProfile.goal) {
+        setGoal(userProfile.goal as any);
+      }
+      if (!skinHistory && userProfile.skin_history) {
+        setSkinHistory(userProfile.skin_history);
+      }
+    }
+  }, [user, userProfile]);
 
   // Product selection after analysis
   const [userProducts, setUserProducts] = useState<SkincareProduct[]>([]);
@@ -204,6 +251,8 @@ export default function AnalyzeForm() {
               setAnalysisId((insertData as any).id);
               // Show product selector after analysis
               setShowProductSelector(true);
+              // Save questionnaire answers to user profile for next time
+              await saveUserProfile();
             }
           } catch (saveErr) {
             // Silent fail - don't interrupt user experience
@@ -216,6 +265,39 @@ export default function AnalyzeForm() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const saveUserProfile = async () => {
+    if (!user) return;
+    
+    const profileData = {
+      user_id: user.id,
+      skin_type_self: skinTypeSelf || null,
+      t_zone_oiliness: tZoneOiliness || null,
+      pore_size: poreSize || null,
+      acne_level: acneLevel || null,
+      sensitivity: sensitivity || null,
+      hydration: hydration || null,
+      gender: gender || null,
+      age: age || null,
+      climate: climate || null,
+      is_traveling: isTraveling || false,
+      travel_climate: travelClimate || null,
+      goal: goal || null,
+      skin_history: skinHistory || null,
+    };
+
+    try {
+      // Upsert: insert or update
+      await (supabase as any)
+        .from("user_profiles")
+        .upsert(profileData, { onConflict: "user_id" });
+      
+      // Refresh the profile in AuthProvider
+      await refreshProfile();
+    } catch (err) {
+      console.error("Failed to save user profile:", err);
     }
   };
 
