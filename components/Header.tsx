@@ -36,6 +36,14 @@ export default function Header() {
           </li>
           <li>
             <Link
+              href="/products"
+              className="text-gray-600 transition-colors hover:text-skin-600"
+            >
+              護膚品
+            </Link>
+          </li>
+          <li>
+            <Link
               href="/history"
               className="text-gray-600 transition-colors hover:text-skin-600"
             >
@@ -101,6 +109,15 @@ export default function Header() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 皮膚分析
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/products"
+                className="block text-gray-600 hover:text-skin-600"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                護膚品
               </Link>
             </li>
             <li>

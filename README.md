@@ -35,26 +35,8 @@ npm run dev
 在 Supabase Dashboard → SQL Editor 運行 `supabase/schema.sql`，或自行執行以下 SQL：
 
 ```sql
-CREATE TABLE IF NOT EXISTS analysis_history (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  skin_type TEXT,
-  score INTEGER,
-  ai_observation TEXT,
-  goal_conflict TEXT,
-  questionnaire JSONB,
-  image_url TEXT,
-  analysis_data JSONB
-);
-
-ALTER TABLE analysis_history ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can only see own history" ON analysis_history
-  FOR ALL USING (user_id = auth.uid());
-
-CREATE POLICY "Users can insert own history" ON analysis_history
-  FOR INSERT WITH CHECK (user_id = auth.uid());
+-- 詳細的 schema 請參考 supabase/schema.sql
+-- 包含 analysis_history、skincare_products、product_usage_logs 表格
 ```
 
 ## 📁 專案結構
@@ -65,18 +47,24 @@ skinsense-web/
 │   ├── layout.tsx          # 根佈局
 │   ├── page.tsx            # 首頁
 │   ├── analyzer/           # 分析工具頁
+│   ├── products/           # 護膚品管理頁
 │   ├── history/            # 分析歷史頁
 │   ├── blog/               # 部落格
 │   └── api/                # API Routes
 ├── components/             # React 組件
+│   ├── ProductsList.tsx   # 護膚品列表
+│   ├── ProductForm.tsx    # 產品表單（新增/編輯）
+│   ├── UsageLogger.tsx     # 使用記錄器
+│   ├── SkincareDiary.tsx   # 護膚日記
 │   ├── HistoryList.tsx    # 歷史記錄列表
-│   └── ...
+│   └── Header.tsx          # 頁面導航
 ├── lib/                    # 工具函數
 │   ├── supabase.ts        # Supabase 客戶端
 │   ├── ai.ts              # Gemini AI 整合
 │   └── types.ts           # TypeScript 類型
 ├── supabase/               # Supabase Schema
-│   └── schema.sql         # 數據庫 schema
+│   ├── schema.sql         # 數據庫 schema
+│   └── types.ts           # Supabase 生成的類型
 └── public/                 # 靜態資源
 ```
 
@@ -96,6 +84,9 @@ skinsense-web/
 - [x] 響應式設計
 - [x] 用戶認證（Google/Apple）
 - [x] 分析歷史記錄
+- [x] 護膚品管理（新增/編輯/刪除）
+- [x] 使用記錄（按日期記錄使用產品）
+- [x] 護膚日記（日曆視圖 + 列表視圖）
 - [ ] Sitemap 生成
 
 ## 🔧 開發腳本
