@@ -61,6 +61,7 @@ export default function ProductsList() {
   const [productEffects, setProductEffects] = useState<Record<string, ProductEffectiveness>>({});
   const [analyzingProduct, setAnalyzingProduct] = useState<string | null>(null);
   const [analysisResults, setAnalysisResults] = useState<Record<string, IngredientAnalysis | null>>({});
+  const [expandedProduct, setExpandedProduct] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -397,30 +398,56 @@ export default function ProductsList() {
                       </span>
                     )}
 
-                    {/* Ingredient Analysis Result - Compact */}
+                    {/* Ingredient Analysis Result - Clickable to expand */}
                     {hasAnalysis && (
-                      <span className={clsx(
-                        "inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs",
-                        analysisResults[product.id]!.status === "good" && "bg-green-50 text-green-600",
-                        analysisResults[product.id]!.status === "warning" && "bg-amber-50 text-amber-600",
-                        analysisResults[product.id]!.status === "bad" && "bg-red-50 text-red-600"
-                      )}>
+                      <button
+                        onClick={() => setExpandedProduct(expandedProduct === product.id ? null : product.id)}
+                        className={clsx(
+                          "inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs transition-all max-w-full",
+                          analysisResults[product.id]!.status === "good" && "bg-green-50 text-green-700 hover:bg-green-100",
+                          analysisResults[product.id]!.status === "warning" && "bg-amber-50 text-amber-700 hover:bg-amber-100",
+                          analysisResults[product.id]!.status === "bad" && "bg-red-50 text-red-700 hover:bg-red-100"
+                        )}
+                      >
                         <span>{analysisResults[product.id]!.status === "good" ? "✅" : analysisResults[product.id]!.status === "warning" ? "⚠️" : "❌"}</span>
-                        <span className="truncate max-w-[120px]">
-                          {analysisResults[product.id]!.analysis_result || analysisResults[product.id]!.recommendation}
+                        <span className="truncate">
+                          {analysisResults[product.id]!.analysis_result || analysisResults[product.id]!.status === "good" ? "適合" : analysisResults[product.id]!.status === "warning" ? "注意" : "不適合"}
                         </span>
-                      </span>
+                        <svg className={clsx("w-3 h-3 flex-shrink-0 transition-transform", expandedProduct === product.id && "rotate-180")} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
                     )}
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="mt-3 flex gap-2">
-                    {!hasAnalysis ? (
+                  {/* Expanded Analysis Details */}
+                  {hasAnalysis && expandedProduct === product.id && (
+                    <div className="mt-2 p-3 rounded-lg bg-gray-50 max-h-40 overflow-y-auto text-xs space-y-2">
+                      <div>
+                        <span className="font-medium text-gray-700">分析：</span>
+                        <span className="text-gray-600">{analysisResults[product.id]!.analysis}</span>
+                      </div>
+                      {analysisResults[product.id]!.ingredients && analysisResults[product.id]!.ingredients.length > 0 && (
+                        <div>
+                          <span className="font-medium text-gray-700">成分：</span>
+                          <span className="text-gray-600">{analysisResults[product.id]!.ingredients.join(", ")}</span>
+                        </div>
+                      )}
+                      <div>
+                        <span className="font-medium text-gray-700">建議：</span>
+                        <span className="text-gray-600">{analysisResults[product.id]!.recommendation}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action Button */}
+                  {!hasAnalysis && (
+                    <div className="mt-3">
                       <button
                         onClick={() => analyzeProduct(product)}
                         disabled={analyzingProduct === product.id}
                         className={clsx(
-                          "flex-1 rounded-lg py-2 text-sm font-medium transition-colors flex items-center justify-center gap-2",
+                          "w-full rounded-lg py-2 text-sm font-medium transition-colors flex items-center justify-center gap-2",
                           analyzingProduct === product.id
                             ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                             : "bg-skin-100 text-skin-700 hover:bg-skin-200"
@@ -428,16 +455,8 @@ export default function ProductsList() {
                       >
                         {analyzingProduct === product.id ? "⏳ 分析中..." : "🔍 檢查成分"}
                       </button>
-                    ) : (
-                      <button
-                        onClick={() => analyzeProduct(product)}
-                        disabled={analyzingProduct === product.id}
-                        className="flex-1 rounded-lg py-1.5 text-xs text-gray-500 hover:text-skin-600 transition-colors border border-gray-200 hover:border-skin-300"
-                      >
-                        {analyzingProduct === product.id ? "⏳ 更新中..." : "🔄 重新分析"}
-                      </button>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
                   {/* Delete Confirmation */}
                   {deleteConfirm === product.id && (
