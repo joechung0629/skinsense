@@ -31,6 +31,14 @@ interface ProductEffectiveness {
   linkedAnalyses: number;
 }
 
+interface IngredientAnalysis {
+  status: "good" | "warning" | "bad";
+  ingredients: string[];
+  analysis: string;
+  recommendation: string;
+  analysis_result?: string;
+}
+
 const productTypeIcons: Record<ProductType, string> = {
   cleanser: "🧴",
   toner: "💧",
@@ -51,6 +59,8 @@ export default function ProductsList() {
   const [editingProduct, setEditingProduct] = useState<SkincareProduct | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [productEffects, setProductEffects] = useState<Record<string, ProductEffectiveness>>({});
+  const [analyzingProduct, setAnalyzingProduct] = useState<string | null>(null);
+  const [analysisResults, setAnalysisResults] = useState<Record<string, IngredientAnalysis | null>>({});
 
   useEffect(() => {
     if (!user) {
@@ -59,7 +69,69 @@ export default function ProductsList() {
     }
     fetchProducts();
     fetchProductEffectiveness();
+    fetchCachedAnalyses();
   }, [user]);
+
+  const fetchCachedAnalyses = async () => {
+    if (!user) return;
+
+    try {
+      const { data } = await (supabase as any)
+        .from("product_analyses")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (!data) return;
+
+      // Keep only the latest analysis for each product
+      const latest: Record<string, IngredientAnalysis | null> = {};
+      for (const row of data) {
+        if (!latest[row.product_id]) {
+          latest[row.product_id] = row.ingredient_analysis as IngredientAnalysis;
+        }
+      }
+      setAnalysisResults(latest);
+    } catch (err) {
+      console.error("Failed to fetch cached analyses:", err);
+    }
+  };
+
+  const analyzeProduct = async (product: SkincareProduct) => {
+    if (!user || analyzingProduct) return;
+
+    setAnalyzingProduct(product.id);
+    setAnalysisResults((prev) => ({ ...prev, [product.id]: null }));
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/analyze-ingredient`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            productId: product.id,
+            productName: product.name,
+            brand: product.brand,
+            userId: user.id,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        setAnalysisResults((prev) => ({ ...prev, [product.id]: result.data }));
+      } else {
+        setAnalysisResults((prev) => ({ ...prev, [product.id]: null }));
+      }
+    } catch (err) {
+      console.error("Failed to analyze product:", err);
+      setAnalysisResults((prev) => ({ ...prev, [product.id]: null }));
+    } finally {
+      setAnalyzingProduct(null);
+    }
+  };
 
   const fetchProducts = async () => {
     if (!user) return;
@@ -315,6 +387,44 @@ export default function ProductsList() {
                           已關聯 {effect.linkedAnalyses} 次分析
                         </div>
                       )}
+
+                      {/* Ingredient Analysis Result */}
+                      {analysisResults[product.id] && (
+                        <div className={clsx(
+                          "mt-3 p-3 rounded-lg text-sm",
+                          analysisResults[product.id]!.status === "good" && "bg-green-50 text-green-700",
+                          analysisResults[product.id]!.status === "warning" && "bg-amber-50 text-amber-700",
+                          analysisResults[product.id]!.status === "bad" && "bg-red-50 text-red-700"
+                        )}>
+                          <div className="font-medium mb-1">{analysisResults[product.id]!.analysis_result || 
+                            (analysisResults[product.id]!.status === "good" ? "✅ 適合" :
+                             analysisResults[product.id]!.status === "warning" ? "⚠️ 注意" : "❌ 不適合")}</div>
+                          <div className="text-xs opacity-80">{analysisResults[product.id]!.recommendation}</div>
+                        </div>
+                      )}
+
+                      {/* Analyze Button */}
+                      <button
+                        onClick={() => analyzeProduct(product)}
+                        disabled={analyzingProduct === product.id}
+                        className={clsx(
+                          "mt-3 w-full rounded-lg py-2 text-sm font-medium transition-colors flex items-center justify-center gap-2",
+                          analyzingProduct === product.id
+                            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                            : "bg-skin-100 text-skin-700 hover:bg-skin-200"
+                        )}
+                      >
+                        {analyzingProduct === product.id ? (
+                          <>
+                            <span className="animate-spin">⏳</span>
+                            分析中...
+                          </>
+                        ) : (
+                          <>
+                            🔍 檢查成分
+                          </>
+                        )}
+                      </button>
                     </div>
                     <div className="flex gap-1">
                       <button

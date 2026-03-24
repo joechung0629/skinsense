@@ -128,3 +128,21 @@ CREATE TRIGGER user_profiles_updated_at
   BEFORE UPDATE ON user_profiles
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at();
+
+-- =====================================================
+-- Product Analyses Table
+-- =====================================================
+-- Stores ingredient analysis results for products
+CREATE TABLE IF NOT EXISTS product_analyses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT NOT NULL,
+  product_id UUID REFERENCES skincare_products(id) ON DELETE CASCADE,
+  ingredient_analysis JSONB,
+  analysis_result TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE product_analyses ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users own their analyses" ON product_analyses
+  FOR ALL USING (user_id = auth.uid()::TEXT);

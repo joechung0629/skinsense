@@ -178,6 +178,32 @@ export interface Database {
           skin_history?: string | null
         }
       }
+      product_analyses: {
+        Row: {
+          id: string
+          user_id: string
+          product_id: string | null
+          ingredient_analysis: Json | null
+          analysis_result: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          product_id?: string | null
+          ingredient_analysis?: Json | null
+          analysis_result?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          product_id?: string | null
+          ingredient_analysis?: Json | null
+          analysis_result?: string | null
+          created_at?: string | null
+        }
+      }
     }
     Views: {}
     Functions: {}
