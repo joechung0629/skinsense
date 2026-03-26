@@ -148,17 +148,19 @@ CREATE POLICY "Users own their analyses" ON product_analyses
   FOR ALL USING (user_id = auth.uid()::TEXT);
 
 -- =====================================================
--- User Allergens Table
+-- Problematic Products Table
 -- =====================================================
--- Stores user's personal allergen/irritant list
-CREATE TABLE IF NOT EXISTS user_allergens (
+-- Stores products that caused adverse reactions for the user
+CREATE TABLE IF NOT EXISTS problematic_products (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id TEXT NOT NULL,
-  allergen TEXT NOT NULL,
+  product_name TEXT NOT NULL,
+  reaction TEXT,
+  notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-ALTER TABLE user_allergens ENABLE ROW LEVEL SECURITY;
+ALTER TABLE problematic_products ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users own their allergens" ON user_allergens
+CREATE POLICY "Users own their problematic products" ON problematic_products
   FOR ALL USING (user_id = auth.uid()::TEXT);

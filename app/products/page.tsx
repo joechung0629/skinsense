@@ -4,16 +4,16 @@ import { useState } from "react";
 import ProductsList from "@/components/ProductsList";
 import UsageLogger from "@/components/UsageLogger";
 import SkincareDiary from "@/components/SkincareDiary";
-import AllergenManager from "@/components/AllergenManager";
+import ProblematicProductsManager from "@/components/ProblematicProductsManager";
 import clsx from "clsx";
 
-type TabId = "products" | "logger" | "diary" | "allergens";
+type TabId = "products" | "logger" | "diary" | "problematic";
 
 const tabs: { id: TabId; label: string; icon: string }[] = [
   { id: "products", label: "我的產品", icon: "📦" },
   { id: "logger", label: "記錄使用", icon: "✏️" },
   { id: "diary", label: "護膚日記", icon: "📅" },
-  { id: "allergens", label: "過敏成分", icon: "⚠️" },
+  { id: "problematic", label: "有問題的產品", icon: "⚠️" },
 ];
 
 export default function ProductsPage() {

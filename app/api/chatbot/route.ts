@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { createClient } from "@/lib/supabase";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
@@ -14,8 +15,29 @@ interface UserProfile {
   hydration?: string;
 }
 
-function buildSystemPrompt(profile: UserProfile): string {
-  return `你是 SkinSense 的 AI 護膚助理。根據用戶的皮膚資料回答問題。
+interface ProblematicProduct {
+  product_name: string;
+  reaction: string | null;
+}
+
+async function fetchProblematicProducts(userId: string): Promise<ProblematicProduct[]> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await (supabase as any)
+      .from("problematic_products")
+      .select("product_name, reaction")
+      .eq("user_id", userId)
+      .limit(10);
+
+    if (error || !data) return [];
+    return data;
+  } catch {
+    return [];
+  }
+}
+
+function buildSystemPrompt(profile: UserProfile, problematicProducts: ProblematicProduct[]): string {
+  let basePrompt = `你是 SkinSense 的 AI 護膚助理。根據用戶的皮膚資料回答問題。
 
 用戶皮膚：
 - 皮膚類型：${profile.skin_type_self || "未填寫"}
@@ -25,7 +47,22 @@ function buildSystemPrompt(profile: UserProfile): string {
 - 痘痘程度：${profile.acne_level || "未填寫"}
 - 缺水情況：${profile.hydration || "未填寫"}
 - 目標：${profile.goal || "未填寫"}
-- 皮膚/過敏史：${profile.skin_history || "無"}
+- 皮膚/過敏史：${profile.skin_history || "無"}`;
+
+  // Add problematic products info if any
+  if (problematicProducts.length > 0) {
+    const productsList = problematicProducts
+      .map(p => `- ${p.product_name}${p.reaction ? `（${p.reaction}）` : ''}`)
+      .join('\n');
+    
+    basePrompt += `
+
+注意：用戶曾經使用以下產品有不良反應：
+${productsList}
+請檢查分析的產品是否可能含有類似成分，並提醒用戶。`;
+  }
+
+  basePrompt += `
 
 規則：
 - 用繁體中文
@@ -35,6 +72,8 @@ function buildSystemPrompt(profile: UserProfile): string {
 - 不要推薦特定品牌
 - 回答簡潔，不超過 200 字
 - 不要重複開頭問候語，直接回答`;
+
+  return basePrompt;
 }
 
 export async function POST(request: NextRequest) {
@@ -49,9 +88,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "API Key 未設置" }, { status: 500 });
     }
 
+    // Fetch problematic products if userId is provided
+    let problematicProducts: ProblematicProduct[] = [];
+    if (userId) {
+      problematicProducts = await fetchProblematicProducts(userId);
+    }
+
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    const systemPrompt = buildSystemPrompt(userProfile || {});
+    const systemPrompt = buildSystemPrompt(userProfile || {}, problematicProducts);
 
     const result = await model.generateContent([
       { text: systemPrompt },
