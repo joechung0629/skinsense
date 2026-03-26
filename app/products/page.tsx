@@ -54,7 +54,7 @@ export default function ProductsPage() {
         {activeTab === "products" && <ProductsList />}
         {activeTab === "logger" && <UsageLogger embedded={true} />}
         {activeTab === "diary" && <SkincareDiary />}
-        {activeTab === "allergens" && <AllergenManager />}
+        {activeTab === "problematic" && <ProblematicProductsManager />}
       </div>
     </div>
   );
