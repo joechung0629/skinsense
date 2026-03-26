@@ -1,8 +1,11 @@
 import Link from "next/link";
+import HomeWeatherSection from "@/components/HomeWeatherSection";
 
 export default function HomePage() {
   return (
     <div className="flex flex-col">
+      {/* Weather Reminder */}
+      <HomeWeatherSection />
       {/* Hero - 強調不需要每天自拍 */}
       <section className="relative overflow-hidden bg-gradient-to-b from-skin-50 to-white py-20">
         <div className="container mx-auto px-4">

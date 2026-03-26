@@ -1,18 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import type { Metadata } from "next";
 import ProductsList from "@/components/ProductsList";
 import UsageLogger from "@/components/UsageLogger";
 import SkincareDiary from "@/components/SkincareDiary";
+import AllergenManager from "@/components/AllergenManager";
 import clsx from "clsx";
 
-type TabId = "products" | "logger" | "diary";
+type TabId = "products" | "logger" | "diary" | "allergens";
 
 const tabs: { id: TabId; label: string; icon: string }[] = [
   { id: "products", label: "我的產品", icon: "📦" },
   { id: "logger", label: "記錄使用", icon: "✏️" },
   { id: "diary", label: "護膚日記", icon: "📅" },
+  { id: "allergens", label: "過敏成分", icon: "⚠️" },
 ];
 
 export default function ProductsPage() {
@@ -53,6 +54,7 @@ export default function ProductsPage() {
         {activeTab === "products" && <ProductsList />}
         {activeTab === "logger" && <UsageLogger embedded={true} />}
         {activeTab === "diary" && <SkincareDiary />}
+        {activeTab === "allergens" && <AllergenManager />}
       </div>
     </div>
   );

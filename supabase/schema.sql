@@ -146,3 +146,19 @@ ALTER TABLE product_analyses ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users own their analyses" ON product_analyses
   FOR ALL USING (user_id = auth.uid()::TEXT);
+
+-- =====================================================
+-- User Allergens Table
+-- =====================================================
+-- Stores user's personal allergen/irritant list
+CREATE TABLE IF NOT EXISTS user_allergens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT NOT NULL,
+  allergen TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE user_allergens ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users own their allergens" ON user_allergens
+  FOR ALL USING (user_id = auth.uid()::TEXT);

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Header from "@/components/Header";
 import SEO from "@/components/SEO";
 import { AuthProvider } from "@/app/providers/AuthProvider";
+import ChatbotWrapper from "@/components/ChatbotWrapper";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -48,6 +49,7 @@ export default function RootLayout({
         <AuthProvider>
           <Header />
           <main>{children}</main>
+          <ChatbotWrapper />
           <footer className="border-t bg-gray-50 py-8">
             <div className="container mx-auto px-4 text-center text-sm text-gray-500">
               <p>© 2026 SkinSense. All rights reserved.</p>

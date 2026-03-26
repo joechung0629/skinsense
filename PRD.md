@@ -23,6 +23,25 @@
 
 ### 3.1 已完成 ✅
 
+#### AI 護膚助理（Chatbot）
+- 浮動 chatbot widget（右下角）
+- 根據用戶皮膚檔案提供個人化建議
+- 使用 Gemini API
+- 可展開/收合
+- 繁體中文介面
+
+#### UV/天氣提醒
+- 首頁載入時顯示當日防曬建議
+- 使用 Open-Meteo API（免費）
+- 根據 UV 指數、濕度給予防曬建議
+- 可按「關閉」當日不再顯示
+
+#### 產品過敏成分管理
+- 用戶可標記用了會過敏的成分
+- 獨立的「過敏成分」Tab
+- 新增/刪除過敏成分
+- 未来分析產品時會檢查是否含過敏成分
+
 #### AI 皮膚分析
 - 用戶填寫 6 題皮膚狀態問卷
 - 上傳臉部照片（可選）
@@ -166,6 +185,14 @@ AI 分析 → 獲得護膚建議
 | goal | TEXT | 主要目標 |
 | skin_history | TEXT | 皮膚/過敏史 |
 
+### user_allergens
+| 欄位 | 類型 | 說明 |
+|------|------|------|
+| id | UUID | 主鍵 |
+| user_id | TEXT | 用戶 ID |
+| allergen | TEXT | 過敏成分名稱 |
+| created_at | TIMESTAMPTZ | 添加時間 |
+
 ---
 
 ## 6. Tech Stack
@@ -200,12 +227,21 @@ skinsense-web/
 │   ├── UsageLogger.tsx      # 使用記錄
 │   ├── SkincareDiary.tsx    # 護膚日記
 │   ├── LoginButton.tsx      # 登入按鈕
-│   └── LoginGate.tsx        # 登入限制
+│   ├── LoginGate.tsx        # 登入限制
+│   ├── Chatbot.tsx          # AI 聊天助理
+│   ├── ChatbotWrapper.tsx   # Chatbot 包裝組件
+│   ├── WeatherReminder.tsx  # UV/天氣提醒
+│   ├── HomeWeatherSection.tsx # 首頁天氣區塊
+│   └── AllergenManager.tsx  # 過敏成分管理
 ├── lib/
 │   └── supabase.ts          # Supabase 客戶端
 ├── supabase/
 │   ├── schema.sql           # 數據庫結構
 │   └── types.ts             # TypeScript 類型
+├── app/
+│   └── api/
+│       └── chatbot/
+│           └── route.ts     # Chatbot API
 └── public/
 ```
 
@@ -222,11 +258,13 @@ skinsense-web/
 - [x] 護膚品追蹤
 - [x] 護膚日記
 - [x] 護膚品效果關聯
+- [x] AI 護膚助理 (Chatbot)
+- [x] UV/天氣防曬提醒
+- [x] 過敏成分管理
 
 ### 增強功能 📋 規劃中
 - [ ] 進度對比/趨勢圖
 - [ ] 定時提醒
-- [ ] 天氣影響分析
 - [ ] 專業報告上傳
 
 ---
