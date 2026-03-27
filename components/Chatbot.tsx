@@ -75,7 +75,8 @@ export default function Chatbot({ userId, userProfile }: ChatbotProps) {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/chatbot", {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const response = await fetch(`${supabaseUrl}/functions/v1/chatbot`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
